@@ -2,6 +2,13 @@
 
 An OpenCode plugin that converts unstructured instruction text into structured, consistent rules using speech act theory and deontic logic.
 
+## Disclaimer
+
+I'm not an NLP expert — I did some research to learn a bit more theory on NLP and stumbled onto speech act theory and deontic logic and thought it could be a good fit for instructions.
+I was annoyed trying to write consistent rules, thinking about phrasing and grammar, so I thought there might be a better way to approach this systematically.
+This project is just me experimenting with these concepts to see if they can help structure and standardize instruction text.
+The implementation may not perfectly align with academic definitions, but the goal is practical utility in organizing rule-based content.
+
 ## Overview
 
 IRF takes raw instruction files and processes them through a two-step AI pipeline:
@@ -19,35 +26,6 @@ The `irf-rewrite` tool accepts a `mode` argument that controls output density:
 - **balanced** (default) — The LLM decides which rules need reasons and which are self-explanatory. Keeps reasons for non-obvious rules, drops them for clear directives.
 - **concise** — Bullet list of directives only, no reasons. Minimal token usage, best for LLM-consumed instruction files where compliance is the goal.
 
-```
-/irf                   # uses balanced (default)
-/irf --mode verbose
-/irf --mode concise
-```
-
-**verbose:**
-```
-Rule: Use arrow functions as the standard function syntax.
-Reason: Arrow functions provide lexical this binding and a more compact syntax.
-
-Rule: Never use function declarations or function expressions.
-Reason: Arrow functions are the standard syntax for the project.
-```
-
-**balanced:**
-```
-Rule: Use arrow functions as the standard function syntax.
-Reason: Arrow functions provide lexical this binding and a more compact syntax.
-
-Rule: Never use function declarations or function expressions.
-```
-
-**concise:**
-```
-- Use arrow functions as the standard function syntax.
-- Never use function declarations or function expressions.
-```
-
 ## Installation
 
 Add IRF as a global OpenCode plugin:
@@ -59,7 +37,7 @@ export { IRFPlugin } from '/path/to/irf/src/index.ts'
 
 ## Usage
 
-Once installed, the `irf-rewrite` tool is available in any OpenCode session. It reads the `instructions` array from your project's `opencode.json` and processes each matched file:
+Once installed, the `irf-rewrite` tool is available in any OpenCode session. By default it reads the `instructions` array from your project's `opencode.json` and processes each matched file:
 
 ```json
 {
@@ -67,15 +45,58 @@ Once installed, the `irf-rewrite` tool is available in any OpenCode session. It 
 }
 ```
 
-Call the tool directly or via a custom command:
+To process specific files instead of running discovery, pass a `files` parameter:
 
 ```
-/irf
+irf-rewrite                              # discover from opencode.json, balanced mode
+irf-rewrite --mode concise               # discover, concise output
+irf-rewrite --files fixtures/testing.md  # single file, balanced mode
+irf-rewrite --files a.md,b.md --mode verbose  # multiple files, verbose output
+```
+
+### Examples
+
+**Input:**
+```
+Always use return await when returning promises from async functions. This provides
+better stack traces and error handling. Arrow functions are the standard function
+syntax. Do not use function declarations or function expressions because arrow
+functions provide lexical this binding and a more compact syntax.
+```
+
+**verbose:**
+```
+Rule: Always use return await when returning promises from async functions.
+Reason: Provides better stack traces and error handling.
+
+Rule: Use arrow functions as the standard function syntax.
+Reason: Arrow functions provide lexical this binding and a more compact syntax.
+
+Rule: Never use function declarations or function expressions.
+Reason: Arrow functions are the standard syntax for the project.
+```
+
+**balanced:**
+```
+Rule: Always use return await when returning promises from async functions.
+Reason: Provides better stack traces and error handling.
+
+Rule: Use arrow functions as the standard function syntax.
+
+Rule: Never use function declarations or function expressions.
+Reason: Arrow functions provide lexical this binding and a more compact syntax.
+```
+
+**concise:**
+```
+- Always use return await when returning promises from async functions.
+- Use arrow functions as the standard function syntax.
+- Never use function declarations or function expressions.
 ```
 
 ## Theoretical Foundation
 
-IRF is inspired by **speech act theory** and **deontic logic** to analyze and structure instructions.
+IRF is inspired by **[speech act theory](https://en.wikipedia.org/wiki/Speech_act)** and **[deontic logic](https://en.wikipedia.org/wiki/Deontic_logic)** to analyze and structure instructions.
 
 ### Speech Act Theory
 

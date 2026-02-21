@@ -1,6 +1,6 @@
 import { assertEquals } from '@std/assert'
 import { describe, it } from '@std/testing/bdd'
-import { buildParsePrompt, buildFormatPrompt, buildRetryPrompt } from './prompt.ts'
+import { buildFormatPrompt, buildParsePrompt, buildRetryPrompt } from './prompt.ts'
 
 describe('buildParsePrompt', () => {
   it('includes the input text', () => {
@@ -34,21 +34,52 @@ describe('buildParsePrompt', () => {
 })
 
 describe('buildFormatPrompt', () => {
-  it('includes the parsed rules JSON', () => {
+  it('includes the parsed rules JSON in all modes', () => {
     const json = '{"rules": [{"strength": "obligatory"}]}'
-    const result = buildFormatPrompt(json)
-    assertEquals(result.includes(json), true)
+    assertEquals(buildFormatPrompt(json, 'verbose').includes(json), true)
+    assertEquals(buildFormatPrompt(json, 'balanced').includes(json), true)
+    assertEquals(buildFormatPrompt(json, 'concise').includes(json), true)
   })
 
-  it('specifies Rule: / Reason: format', () => {
+  it('asks for valid JSON in all modes', () => {
+    assertEquals(buildFormatPrompt('{}', 'verbose').includes('Return ONLY valid JSON'), true)
+    assertEquals(buildFormatPrompt('{}', 'balanced').includes('Return ONLY valid JSON'), true)
+    assertEquals(buildFormatPrompt('{}', 'concise').includes('Return ONLY valid JSON'), true)
+  })
+
+  it('defaults to balanced when mode is omitted', () => {
     const result = buildFormatPrompt('{}')
+    assertEquals(result.includes('Use your judgment'), true)
+  })
+
+  it('verbose mode requires both Rule and Reason for every rule', () => {
+    const result = buildFormatPrompt('{}', 'verbose')
+    assertEquals(result.includes('Every rule must include both a Rule line and a Reason line'), true)
     assertEquals(result.includes('Rule:'), true)
     assertEquals(result.includes('Reason:'), true)
   })
 
-  it('asks for valid JSON only', () => {
-    const result = buildFormatPrompt('{}')
-    assertEquals(result.includes('Return ONLY valid JSON'), true)
+  it('balanced mode lets the LLM decide which rules need reasons', () => {
+    const result = buildFormatPrompt('{}', 'balanced')
+    assertEquals(result.includes('Use your judgment'), true)
+    assertEquals(result.includes('non-obvious or counterintuitive'), true)
+    assertEquals(result.includes('self-explanatory'), true)
+  })
+
+  it('concise mode excludes reasons and uses bullet format', () => {
+    const result = buildFormatPrompt('{}', 'concise')
+    assertEquals(result.includes('Do not include reasons or justifications'), true)
+    assertEquals(result.includes('"- ..."'), true)
+  })
+
+  it('produces different prompts for each mode', () => {
+    const verbose = buildFormatPrompt('{}', 'verbose')
+    const balanced = buildFormatPrompt('{}', 'balanced')
+    const concise = buildFormatPrompt('{}', 'concise')
+
+    assertEquals(verbose !== balanced, true)
+    assertEquals(balanced !== concise, true)
+    assertEquals(verbose !== concise, true)
   })
 })
 

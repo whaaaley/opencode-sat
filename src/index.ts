@@ -1,23 +1,43 @@
 import type { Plugin } from '@opencode-ai/plugin'
 import { tool } from '@opencode-ai/plugin'
-import { discover } from './discover.ts'
+import { discover, readFilePaths } from './discover.ts'
+import type { InstructionFile } from './discover.ts'
 import { buildTable, type ComparisonResult } from './compare.ts'
 import { detectModel, promptWithRetry } from './session.ts'
 import { safeAsync } from './utils/safe.ts'
 import { processFile } from './process.ts'
+import type { FormatMode } from './prompt.ts'
+
+const FORMAT_MODES: FormatMode[] = ['verbose', 'balanced', 'concise']
 
 export const IRFPlugin: Plugin = async ({ directory, client }) => {
   return {
     tool: {
       'irf-rewrite': tool({
-        description: 'Discover instruction files from opencode.json, parse them into structured rules, format them into human-readable rules, and write the formatted rules back to the original files.',
-        args: {},
-        async execute(_args, context) {
+        description:
+          'Discover instruction files from opencode.json, parse them into structured rules, format them into human-readable rules, and write the formatted rules back to the original files. Accepts an optional mode: verbose (full Rule/Reason pairs), balanced (LLM decides which rules need reasons), or concise (bullet list, no reasons). Defaults to balanced. Accepts an optional files parameter to process specific files instead of running discovery.',
+        args: {
+          mode: tool.schema.string().optional().describe('Output format: verbose, balanced, or concise (default: balanced)'),
+          files: tool.schema.string().optional().describe('Comma-separated file paths to process instead of discovering from opencode.json'),
+        },
+        async execute(args, context) {
+          // validate mode argument
+          const mode: FormatMode = (args.mode && FORMAT_MODES.includes(args.mode as FormatMode)) ? args.mode as FormatMode : 'balanced'
           try {
-            // discover instruction files
-            const discovered = await discover(directory)
-            if (discovered.error !== null || !discovered.data) {
-              return discovered.error || 'No instruction files found'
+            // resolve files: explicit paths or discovery
+            let files: InstructionFile[]
+            if (args.files) {
+              const paths = args.files.split(',').map((p) => p.trim()).filter((p) => p.length > 0)
+              if (paths.length === 0) {
+                return 'No valid file paths provided'
+              }
+              files = await readFilePaths(directory, paths)
+            } else {
+              const discovered = await discover(directory)
+              if (discovered.error !== null || !discovered.data) {
+                return discovered.error || 'No instruction files found'
+              }
+              files = discovered.data
             }
 
             // detect model from current session
@@ -25,8 +45,6 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
             if (!model) {
               return 'Could not detect current model. Send a message first, then call irf-rewrite.'
             }
-
-            const files = discovered.data
 
             // create a session for internal LLM calls
             const sessionResult = await client.session.create({
@@ -54,7 +72,7 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
                 break
               }
 
-              const fileResult = await processFile(file, prompt)
+              const fileResult = await processFile(file, prompt, mode)
               results.push(fileResult.message)
               if (fileResult.comparison) {
                 comparisons.push(fileResult.comparison)

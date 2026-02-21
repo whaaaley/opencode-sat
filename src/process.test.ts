@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { processFile, type PromptFn } from './process.ts'
 import type { InstructionFile } from './discover.ts'
+import type { FormatMode } from './prompt.ts'
 
 // helper: build a prompt fn that returns parse then format results in order
 const makePromptFn = (
@@ -33,6 +34,23 @@ const sampleParsed = {
 
 const sampleFormatted = {
   rules: ['Rule: Use arrow functions\nReason: consistency'],
+}
+
+// helper: build a prompt fn that captures prompt strings and returns canned results
+const makeCapturingPromptFn = (
+  parseData: { rules: { strength: string; action: string; target: string; reason: string }[] },
+  formatData: { rules: string[] },
+  captured: string[],
+): PromptFn => {
+  let call = 0
+  return (async (text: string) => {
+    captured.push(text)
+    call++
+    if (call === 1) {
+      return { data: parseData, error: null }
+    }
+    return { data: formatData, error: null }
+  }) as PromptFn
 }
 
 describe('processFile', () => {
@@ -98,7 +116,7 @@ describe('processFile', () => {
     await Deno.remove(dir, { recursive: true })
   })
 
-  it('joins multiple rules with double newline', async () => {
+  it('joins multiple rules with double newline in verbose and balanced modes', async () => {
     const dir = await Deno.makeTempDir()
     const filePath = join(dir, 'multi.md')
     await Deno.writeTextFile(filePath, 'original')
@@ -119,6 +137,31 @@ describe('processFile', () => {
 
     const written = await readFile(filePath, 'utf-8')
     assertEquals(written, 'Rule: Use arrow functions\nReason: consistency\n\nRule: Prefer const\nReason: immutability\n')
+
+    await Deno.remove(dir, { recursive: true })
+  })
+
+  it('joins multiple rules with single newline in concise mode', async () => {
+    const dir = await Deno.makeTempDir()
+    const filePath = join(dir, 'concise.md')
+    await Deno.writeTextFile(filePath, 'original')
+
+    const conciseFormatted = {
+      rules: [
+        '- Use arrow functions for consistency.',
+        '- Prefer const over let.',
+      ],
+    }
+
+    const file: InstructionFile = { path: filePath, content: 'original' }
+    const prompt = makePromptFn(sampleParsed, null, conciseFormatted, null)
+
+    const result = await processFile(file, prompt, 'concise')
+
+    assertStringIncludes(result.message, '2 rules written')
+
+    const written = await readFile(filePath, 'utf-8')
+    assertEquals(written, '- Use arrow functions for consistency.\n- Prefer const over let.\n')
 
     await Deno.remove(dir, { recursive: true })
   })
@@ -149,6 +192,57 @@ describe('processFile', () => {
     // "Rule: Short\nReason: Brief\n" = 26 bytes
     assertEquals(result.comparison!.generatedBytes, 26)
     assertEquals(result.comparison!.difference, 74)
+
+    await Deno.remove(dir, { recursive: true })
+  })
+
+  it('passes verbose mode to format prompt', async () => {
+    const dir = await Deno.makeTempDir()
+    const filePath = join(dir, 'test.md')
+    await Deno.writeTextFile(filePath, 'original')
+
+    const file: InstructionFile = { path: filePath, content: 'original' }
+    const prompts: string[] = []
+    const capturingPrompt = makeCapturingPromptFn(sampleParsed, sampleFormatted, prompts)
+
+    await processFile(file, capturingPrompt, 'verbose')
+
+    // second call is the format prompt — should contain verbose-specific instructions
+    assertStringIncludes(prompts[1], 'Every rule must include both a Rule line and a Reason line')
+
+    await Deno.remove(dir, { recursive: true })
+  })
+
+  it('passes concise mode to format prompt', async () => {
+    const dir = await Deno.makeTempDir()
+    const filePath = join(dir, 'test.md')
+    await Deno.writeTextFile(filePath, 'original')
+
+    const file: InstructionFile = { path: filePath, content: 'original' }
+    const prompts: string[] = []
+    const capturingPrompt = makeCapturingPromptFn(sampleParsed, { rules: ['- Use arrow functions'] }, prompts)
+
+    await processFile(file, capturingPrompt, 'concise')
+
+    // second call is the format prompt — should contain concise-specific instructions
+    assertStringIncludes(prompts[1], 'Do not include reasons or justifications')
+
+    await Deno.remove(dir, { recursive: true })
+  })
+
+  it('defaults to balanced mode when mode is omitted', async () => {
+    const dir = await Deno.makeTempDir()
+    const filePath = join(dir, 'test.md')
+    await Deno.writeTextFile(filePath, 'original')
+
+    const file: InstructionFile = { path: filePath, content: 'original' }
+    const prompts: string[] = []
+    const capturingPrompt = makeCapturingPromptFn(sampleParsed, sampleFormatted, prompts)
+
+    await processFile(file, capturingPrompt)
+
+    // second call is the format prompt — should contain balanced-specific instructions
+    assertStringIncludes(prompts[1], 'Use your judgment')
 
     await Deno.remove(dir, { recursive: true })
   })

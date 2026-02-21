@@ -26,9 +26,7 @@ export const compareBytes = (file: string, original: string, generated: string):
 // uses ASCII indicators (+/-) for consistent monospace alignment
 export const formatRow = (result: ComparisonResult): string => {
   const saved = result.difference > 0
-  const changeStr = saved
-    ? '\u2212' + result.percentChange.toFixed(1) + '%'
-    : '+' + Math.abs(result.percentChange).toFixed(1) + '%'
+  const changeStr = saved ? '\u2212' + result.percentChange.toFixed(1) + '%' : '+' + Math.abs(result.percentChange).toFixed(1) + '%'
 
   return (
     result.file.padEnd(25) +
@@ -76,21 +74,19 @@ export const buildTable = (results: ComparisonResult[]): string => {
 
   lines.push(separator)
   const totalSaved = totals.totalDifference > 0
-  const totalChangeStr = totalSaved
-    ? '\u2212' + totals.totalPercentChange.toFixed(1) + '%'
-    : '+' + Math.abs(totals.totalPercentChange).toFixed(1) + '%'
+  const totalChangeStr = totalSaved ? '\u2212' + totals.totalPercentChange.toFixed(1) + '%' : '+' + Math.abs(totals.totalPercentChange).toFixed(1) + '%'
   lines.push(
-    'TOTAL'.padEnd(25)
-    + totals.totalOriginal.toString().padStart(10)
-    + totals.totalGenerated.toString().padStart(12)
-    + totals.totalDifference.toString().padStart(8)
-    + totalChangeStr.padStart(10),
+    'TOTAL'.padEnd(25) +
+      totals.totalOriginal.toString().padStart(10) +
+      totals.totalGenerated.toString().padStart(12) +
+      totals.totalDifference.toString().padStart(8) +
+      totalChangeStr.padStart(10),
   )
   lines.push('')
   lines.push(
-    (totalSaved ? 'SAVED ' : 'INCREASED ')
-    + Math.abs(totals.totalDifference) + ' bytes ('
-    + Math.abs(totals.totalPercentChange).toFixed(1) + '%)',
+    (totalSaved ? 'SAVED ' : 'INCREASED ') +
+      Math.abs(totals.totalDifference) + ' bytes (' +
+      Math.abs(totals.totalPercentChange).toFixed(1) + '%)',
   )
 
   return lines.join('\n')

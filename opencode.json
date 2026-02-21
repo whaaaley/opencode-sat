@@ -7,6 +7,6 @@
     }
   },
   "instructions": [
-    "fixtures/*.md"
+    "instructions/*.md"
   ]
 }

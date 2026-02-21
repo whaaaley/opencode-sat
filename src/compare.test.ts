@@ -1,6 +1,6 @@
 import { assertEquals } from '@std/assert'
 import { describe, it } from '@std/testing/bdd'
-import { compareBytes, formatRow, summarize, buildTable } from './compare.ts'
+import { buildTable, compareBytes, formatRow, summarize } from './compare.ts'
 
 describe('compareBytes', () => {
   it('detects savings when original is larger', () => {

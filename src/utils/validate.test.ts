@@ -1,7 +1,7 @@
 import { assertEquals } from '@std/assert'
 import { describe, it } from '@std/testing/bdd'
 import { z } from 'zod'
-import { validateJson, formatValidationError } from './validate.ts'
+import { formatValidationError, validateJson } from './validate.ts'
 
 const TestSchema = z.object({
   name: z.string(),

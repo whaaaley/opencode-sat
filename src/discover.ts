@@ -1,5 +1,5 @@
 import { glob, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { type Result, safe, safeAsync } from './utils/safe.ts'
 
 export type InstructionFile = {
@@ -88,6 +88,12 @@ const readFiles = async (files: string[]) => {
   }
 
   return results
+}
+
+// read specific file paths into InstructionFile entries, resolving relative paths against directory
+export const readFilePaths = async (directory: string, paths: string[]): Promise<InstructionFile[]> => {
+  const resolved = paths.map((p) => resolve(directory, p))
+  return await readFiles(resolved)
 }
 
 export const discover = async (directory: string): Promise<DiscoverResult> => {

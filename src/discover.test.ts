@@ -1,9 +1,9 @@
 import { assertEquals, assertNotEquals } from '@std/assert'
 import { afterEach, describe, it } from '@std/testing/bdd'
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { discover } from './discover.ts'
+import { discover, readFilePaths } from './discover.ts'
 
 let tmpDir = ''
 
@@ -164,5 +164,81 @@ describe('discover', () => {
     assertEquals(result.error, null)
     assertNotEquals(result.data, null)
     assertEquals(result.data !== null && result.data.length, 2)
+  })
+})
+
+describe('readFilePaths', () => {
+  afterEach(async () => {
+    if (tmpDir) {
+      await rm(tmpDir, { recursive: true, force: true })
+      tmpDir = ''
+    }
+  })
+
+  it('reads files by relative path', async () => {
+    const dir = await makeTmpDir()
+    await writeInstruction(dir, 'docs/rules.md', 'rule content')
+
+    const results = await readFilePaths(dir, ['docs/rules.md'])
+
+    assertEquals(results.length, 1)
+    assertEquals(results[0].path, join(dir, 'docs/rules.md'))
+    assertEquals(results[0].content, 'rule content')
+    assertEquals(results[0].error, undefined)
+  })
+
+  it('reads files by absolute path', async () => {
+    const dir = await makeTmpDir()
+    await writeInstruction(dir, 'testing.md', 'test content')
+    const absPath = join(dir, 'testing.md')
+
+    const results = await readFilePaths(dir, [absPath])
+
+    assertEquals(results.length, 1)
+    assertEquals(results[0].content, 'test content')
+    assertEquals(results[0].error, undefined)
+  })
+
+  it('reads multiple files', async () => {
+    const dir = await makeTmpDir()
+    await writeInstruction(dir, 'a.md', 'alpha')
+    await writeInstruction(dir, 'b.md', 'beta')
+
+    const results = await readFilePaths(dir, ['a.md', 'b.md'])
+
+    assertEquals(results.length, 2)
+    assertEquals(results[0].content, 'alpha')
+    assertEquals(results[1].content, 'beta')
+  })
+
+  it('returns error for nonexistent file', async () => {
+    const dir = await makeTmpDir()
+
+    const results = await readFilePaths(dir, ['missing.md'])
+
+    assertEquals(results.length, 1)
+    assertEquals(results[0].content, '')
+    assertNotEquals(results[0].error, undefined)
+  })
+
+  it('returns empty array for empty paths', async () => {
+    const dir = await makeTmpDir()
+
+    const results = await readFilePaths(dir, [])
+
+    assertEquals(results.length, 0)
+  })
+
+  it('handles mix of valid and invalid paths', async () => {
+    const dir = await makeTmpDir()
+    await writeInstruction(dir, 'good.md', 'good content')
+
+    const results = await readFilePaths(dir, ['good.md', 'bad.md'])
+
+    assertEquals(results.length, 2)
+    assertEquals(results[0].content, 'good content')
+    assertEquals(results[0].error, undefined)
+    assertEquals(results[1].content, '')
+    assertNotEquals(results[1].error, undefined)
   })
 })
