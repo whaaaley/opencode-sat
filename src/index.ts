@@ -2,11 +2,11 @@ import type { Plugin } from '@opencode-ai/plugin'
 import { tool } from '@opencode-ai/plugin'
 import { discover, readFilePaths } from './discover.ts'
 import type { InstructionFile } from './discover.ts'
-import { buildTable, type ComparisonResult } from './utils/compare.ts'
-import { detectModel, promptWithRetry } from './session.ts'
-import { safeAsync } from './utils/safe.ts'
 import { type FileResult, processFile, type PromptFn } from './process.ts'
 import { isFormatMode } from './prompt.ts'
+import { detectModel, promptWithRetry } from './session.ts'
+import { buildTable, type ComparisonResult } from './utils/compare.ts'
+import { safeAsync } from './utils/safe.ts'
 
 const ERROR_LABELS: Record<Exclude<FileResult['status'], 'success'>, string> = {
   readError: 'Read failed',
@@ -23,8 +23,12 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
         description:
           'Discover instruction files from opencode.json, parse them into structured rules, format them into human-readable rules, and write the formatted rules back to the original files. Accepts an optional mode: verbose (full Rule/Reason pairs), balanced (LLM decides which rules need reasons), or concise (bullet list, no reasons). Defaults to balanced. Accepts an optional files parameter to process specific files instead of running discovery.',
         args: {
-          mode: tool.schema.string().optional().describe('Output format: verbose, balanced, or concise (default: balanced)'),
-          files: tool.schema.string().optional().describe('Comma-separated file paths to process instead of discovering from opencode.json'),
+          mode: tool.schema.string().optional().describe(
+            'Output format: verbose, balanced, or concise (default: balanced)',
+          ),
+          files: tool.schema.string().optional().describe(
+            'Comma-separated file paths to process instead of discovering from opencode.json',
+          ),
         },
         async execute(args, context) {
           // validate mode argument
@@ -64,7 +68,8 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
             const sessionId = sessionResult.data.id
 
             // close over session details so processFile only needs a prompt callback
-            const prompt: PromptFn = (text, schema) => promptWithRetry({ client, sessionId, initialPrompt: text, schema, model })
+            const prompt: PromptFn = (text, schema) =>
+              promptWithRetry({ client, sessionId, initialPrompt: text, schema, model })
 
             // process files sequentially — parallel prompting through a shared
             // session may cause ordering issues depending on SDK behavior
@@ -83,7 +88,9 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
                 results.push('**' + fileResult.path + '**: ' + fileResult.rulesCount + ' rules written')
                 comparisons.push(fileResult.comparison)
               } else {
-                results.push('**' + fileResult.path + '**: ' + ERROR_LABELS[fileResult.status] + ' - ' + fileResult.error)
+                results.push(
+                  '**' + fileResult.path + '**: ' + ERROR_LABELS[fileResult.status] + ' - ' + fileResult.error,
+                )
               }
             }
 

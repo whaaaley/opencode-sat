@@ -1,9 +1,9 @@
 import { assert, assertEquals, assertStringIncludes } from '@std/assert'
 import { describe, it } from '@std/testing/bdd'
-import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
-import { processFile, type PromptFn } from './process.ts'
+import { join } from 'node:path'
 import type { InstructionFile } from './discover.ts'
+import { processFile, type PromptFn } from './process.ts'
 
 // helper: build a prompt fn that returns parse then format results in order
 // cast is necessary because PromptFn is universally generic (<T>) but test mocks
@@ -20,7 +20,9 @@ const makePromptFn = (
     if (call === 1) {
       return Promise.resolve(parseError !== null ? { data: null, error: parseError } : { data: parseData, error: null })
     }
-    return Promise.resolve(formatError !== null ? { data: null, error: formatError } : { data: formatData, error: null })
+    return Promise.resolve(
+      formatError !== null ? { data: null, error: formatError } : { data: formatData, error: null },
+    )
   }) as PromptFn
 }
 
@@ -146,7 +148,10 @@ describe('processFile', () => {
     assertEquals(result.rulesCount, 2)
 
     const written = await readFile(filePath, 'utf-8')
-    assertEquals(written, 'Rule: Use arrow functions\nReason: consistency\n\nRule: Prefer const\nReason: immutability\n')
+    assertEquals(
+      written,
+      'Rule: Use arrow functions\nReason: consistency\n\nRule: Prefer const\nReason: immutability\n',
+    )
 
     await Deno.remove(dir, { recursive: true })
   })

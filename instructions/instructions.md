@@ -52,5 +52,8 @@ Reason: To keep function signatures compact and scannable on a single line.
 Rule: When an object literal or function has three or more fields or parameters, split onto multiple lines.
 Reason: One or two fields on a single line is fine, but three or more becomes hard to scan and should be expanded for readability.
 
+Rule: When string concatenation with plus signs would exceed 120 characters, use an array with join instead.
+Reason: To allow multi-line formatting that prettier will not collapse back into a single line.
+
 Rule: When working through a todo list, complete the easiest tasks first.
 Reason: To build momentum and reduce list size quickly before tackling complex items.

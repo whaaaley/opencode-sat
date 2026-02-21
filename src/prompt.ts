@@ -4,7 +4,8 @@ export type FormatMode = 'verbose' | 'balanced' | 'concise'
 
 export const FORMAT_MODES: FormatMode[] = ['verbose', 'balanced', 'concise']
 
-export const isFormatMode = (v: unknown): v is FormatMode => typeof v === 'string' && FORMAT_MODES.includes(v as FormatMode)
+export const isFormatMode = (v: unknown): v is FormatMode =>
+  typeof v === 'string' && FORMAT_MODES.includes(v as FormatMode)
 
 export const buildParsePrompt = (input: string): string => {
   const instructions = [
@@ -90,5 +91,6 @@ export const buildFormatPrompt = (parsedRulesJson: string, mode: FormatMode = 'b
 }
 
 export const buildRetryPrompt = (errorMessage: string): string => {
-  return 'Your previous response was invalid. ' + errorMessage + '\n\nReturn ONLY valid JSON. Do not include any text outside the JSON object.'
+  return 'Your previous response was invalid. ' + errorMessage
+    + '\n\nReturn ONLY valid JSON. Do not include any text outside the JSON object.'
 }

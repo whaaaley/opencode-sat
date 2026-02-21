@@ -36,11 +36,11 @@ export const formatRow = (result: ComparisonResult): string => {
   const changeStr = formatChange(result.difference, result.percentChange)
 
   return (
-    result.file.padEnd(25) +
-    result.originalBytes.toString().padStart(10) +
-    result.generatedBytes.toString().padStart(12) +
-    result.difference.toString().padStart(8) +
-    changeStr.padStart(10)
+    result.file.padEnd(25)
+    + result.originalBytes.toString().padStart(10)
+    + result.generatedBytes.toString().padStart(12)
+    + result.difference.toString().padStart(8)
+    + changeStr.padStart(10)
   )
 }
 
@@ -73,7 +73,8 @@ export const buildTable = (results: ComparisonResult[]): string => {
   }
 
   const lines: string[] = []
-  const header = 'File'.padEnd(25) + 'Original'.padStart(10) + 'Generated'.padStart(12) + 'Diff'.padStart(8) + 'Change'.padStart(10)
+  const header = 'File'.padEnd(25) + 'Original'.padStart(10)
+    + 'Generated'.padStart(12) + 'Diff'.padStart(8) + 'Change'.padStart(10)
   const separator = '\u2500'.repeat(65)
 
   lines.push(header)
@@ -89,17 +90,17 @@ export const buildTable = (results: ComparisonResult[]): string => {
   lines.push(separator)
   const totalChangeStr = formatChange(totals.totalDifference, totals.totalPercentChange)
   lines.push(
-    'TOTAL'.padEnd(25) +
-      totals.totalOriginal.toString().padStart(10) +
-      totals.totalGenerated.toString().padStart(12) +
-      totals.totalDifference.toString().padStart(8) +
-      totalChangeStr.padStart(10),
+    'TOTAL'.padEnd(25)
+      + totals.totalOriginal.toString().padStart(10)
+      + totals.totalGenerated.toString().padStart(12)
+      + totals.totalDifference.toString().padStart(8)
+      + totalChangeStr.padStart(10),
   )
   lines.push('')
   lines.push(
-    (totals.totalDifference > 0 ? 'SAVED ' : 'INCREASED ') +
-      Math.abs(totals.totalDifference) + ' bytes (' +
-      Math.abs(totals.totalPercentChange).toFixed(1) + '%)',
+    (totals.totalDifference > 0 ? 'SAVED ' : 'INCREASED ')
+      + Math.abs(totals.totalDifference) + ' bytes ('
+      + Math.abs(totals.totalPercentChange).toFixed(1) + '%)',
   )
 
   return lines.join('\n')

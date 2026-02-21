@@ -1,8 +1,8 @@
 import { assertEquals, assertNotEquals } from '@std/assert'
 import { afterEach, describe, it } from '@std/testing/bdd'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
 import { discover, readFilePaths } from './discover.ts'
 
 let tmpDir = ''

@@ -1,10 +1,10 @@
-import { basename } from 'node:path'
 import { writeFile } from 'node:fs/promises'
+import { basename } from 'node:path'
 import type { z } from 'zod'
 import type { InstructionFile } from './discover.ts'
-import { compareBytes, type ComparisonResult } from './utils/compare.ts'
-import { FormatResponseSchema, ParseResponseSchema } from './schema.ts'
 import { buildFormatPrompt, buildParsePrompt, type FormatMode } from './prompt.ts'
+import { FormatResponseSchema, ParseResponseSchema } from './schema.ts'
+import { compareBytes, type ComparisonResult } from './utils/compare.ts'
 import type { Result } from './utils/safe.ts'
 import { safeAsync } from './utils/safe.ts'
 
@@ -27,7 +27,11 @@ export type FileResult = FileResultSuccess | FileResultError
 export type PromptFn = <T>(prompt: string, schema: z.ZodType<T>) => Promise<Result<T>>
 
 // process a single instruction file through the parse -> format -> write pipeline
-export const processFile = async (file: InstructionFile, prompt: PromptFn, mode: FormatMode = 'balanced'): Promise<FileResult> => {
+export const processFile = async (
+  file: InstructionFile,
+  prompt: PromptFn,
+  mode: FormatMode = 'balanced',
+): Promise<FileResult> => {
   // skip files that failed to read
   if (file.error) {
     return { status: 'readError', path: file.path, error: file.error }

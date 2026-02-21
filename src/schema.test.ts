@@ -1,6 +1,15 @@
 import { assertEquals } from '@std/assert'
 import { describe, it } from '@std/testing/bdd'
-import { ActionSchema, ContextSchema, ParsedRuleSchema, ParsedSchema, ReasonSchema, RuleSchema, StrengthSchema, TargetSchema } from './schema.ts'
+import {
+  ActionSchema,
+  ContextSchema,
+  ParsedRuleSchema,
+  ParsedSchema,
+  ReasonSchema,
+  RuleSchema,
+  StrengthSchema,
+  TargetSchema,
+} from './schema.ts'
 
 describe('StrengthSchema', () => {
   const valid = ['obligatory', 'permissible', 'forbidden', 'optional', 'supererogatory', 'indifferent', 'omissible']
