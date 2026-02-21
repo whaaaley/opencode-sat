@@ -61,15 +61,12 @@ Reason: Arrow functions provide lexical this binding and a more compact syntax.
 
 ## Installation
 
-Add IRF to your `opencode.json`:
+Add IRF as a global OpenCode plugin:
 
-```json
-{
-  "plugin": ["opencode-irf"]
-}
+```ts
+// ~/.config/opencode/plugins/irf.ts
+export { IRFPlugin } from '/path/to/irf/src/index.ts'
 ```
-
-Restart OpenCode. The plugin will be installed automatically.
 
 ## Usage
 
