@@ -14,7 +14,7 @@ type ValidateJsonParseError = {
 type ValidateJsonSchemaError = {
   data: null
   error: 'schema'
-  issues: z.ZodIssue[]
+  issues: z.core.$ZodIssue[]
 }
 
 type ValidateJsonResult<T> = ValidateJsonSuccess<T> | ValidateJsonParseError | ValidateJsonSchemaError

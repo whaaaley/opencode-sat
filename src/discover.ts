@@ -74,17 +74,10 @@ const readFiles = async (files: string[]) => {
   for (const file of files) {
     const { data, error } = await safeAsync(() => readFile(file, 'utf-8'))
     if (error) {
-      results.push({
-        path: file,
-        content: '',
-        error: error.message,
-      })
-    } else {
-      results.push({
-        path: file,
-        content: data,
-      })
+      results.push({ path: file, content: '', error: error.message })
+      continue
     }
+    results.push({ path: file, content: data })
   }
 
   return results

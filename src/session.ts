@@ -36,6 +36,7 @@ const isMessageEntryArray = (v: unknown): v is MessageEntry[] => Array.isArray(v
 export const extractText = (parts: Part[]): string => {
   return parts
     .filter((p) => p.type === 'text' && p.text)
+    // fallback needed because TS cannot narrow through .filter()
     .map((p) => p.text || '')
     .join('')
 }
