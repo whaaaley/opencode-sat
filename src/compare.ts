@@ -76,13 +76,15 @@ export const buildTable = (results: ComparisonResult[]): string => {
 
   lines.push(separator)
   const totalSaved = totals.totalDifference > 0
+  const totalChangeStr = totalSaved
+    ? '\u2212' + totals.totalPercentChange.toFixed(1) + '%'
+    : '+' + Math.abs(totals.totalPercentChange).toFixed(1) + '%'
   lines.push(
     'TOTAL'.padEnd(25)
     + totals.totalOriginal.toString().padStart(10)
     + totals.totalGenerated.toString().padStart(12)
     + totals.totalDifference.toString().padStart(8)
-    + (totalSaved ? ' \u2212' : ' +')
-    + Math.abs(totals.totalPercentChange).toFixed(1) + '%',
+    + totalChangeStr.padStart(10),
   )
   lines.push('')
   lines.push(

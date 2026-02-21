@@ -1,6 +1,6 @@
 import { glob, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { safe, safeAsync } from './utils/safe.ts'
+import { type Result, safe, safeAsync } from './utils/safe.ts'
 
 export type InstructionFile = {
   path: string
@@ -8,29 +8,8 @@ export type InstructionFile = {
   error?: string
 }
 
-type DiscoverSuccess = {
-  data: InstructionFile[]
-  error: null
-}
-
-type DiscoverError = {
-  data: null
-  error: string
-}
-
-type DiscoverResult = DiscoverSuccess | DiscoverError
-
-type ConfigSuccess = {
-  data: string[]
-  error: null
-}
-
-type ConfigError = {
-  data: null
-  error: string
-}
-
-type ConfigResult = ConfigSuccess | ConfigError
+type DiscoverResult = Result<InstructionFile[]>
+type ConfigResult = Result<string[]>
 
 const readConfig = async (directory: string): Promise<ConfigResult> => {
   const configPath = join(directory, 'opencode.json')
@@ -113,7 +92,7 @@ const readFiles = async (files: string[]) => {
 
 export const discover = async (directory: string): Promise<DiscoverResult> => {
   const config = await readConfig(directory)
-  if (config.error || !config.data) {
+  if (config.error !== null || !config.data) {
     return {
       data: null,
       error: config.error || 'No instructions found',

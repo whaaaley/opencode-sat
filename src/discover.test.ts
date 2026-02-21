@@ -1,7 +1,7 @@
 import { assertEquals, assertNotEquals } from '@std/assert'
 import { afterEach, describe, it } from '@std/testing/bdd'
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { discover } from './discover.ts'
 
@@ -18,7 +18,7 @@ const writeConfig = async (dir: string, config: Record<string, unknown>) => {
 
 const writeInstruction = async (dir: string, relativePath: string, content: string) => {
   const full = join(dir, relativePath)
-  const parent = full.substring(0, full.lastIndexOf('/'))
+  const parent = dirname(full)
   await mkdir(parent, { recursive: true })
   await writeFile(full, content, 'utf-8')
 }

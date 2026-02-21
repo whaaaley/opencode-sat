@@ -1,5 +1,6 @@
 import type { PluginInput } from '@opencode-ai/plugin'
 import type { z } from 'zod'
+import type { Result } from './utils/safe.ts'
 import { buildRetryPrompt } from './prompt.ts'
 import { extractLlmError, type MessageInfo } from './utils/extractLlmError.ts'
 import { stripCodeFences } from './utils/stripCodeFences.ts'
@@ -12,18 +13,9 @@ export type PromptModel = {
   modelID: string
 }
 
-type PromptSuccess<T> = {
-  data: T
-  error: null
-}
+export type PromptResult<T> = Result<T>
 
-type PromptError = {
-  data: null
-  error: string
-}
-
-export type PromptResult<T> = PromptSuccess<T> | PromptError
-
+// SDK types — local workarounds until the SDK exports proper types
 type Part = {
   type: string
   text?: string
@@ -90,6 +82,7 @@ export const promptWithRetry = async <T>(
       },
     })
 
+    // no response data means a transport/API failure — not retryable
     if (!response.data) {
       return {
         data: null,
@@ -107,7 +100,7 @@ export const promptWithRetry = async <T>(
       }
     }
 
-    // SDK returns untyped parts — extractText filters by type === 'text' with fallback
+    // empty text is a model issue — retryable
     const text = extractText(response.data.parts as Part[])
     if (!text) {
       lastError = 'Empty response'

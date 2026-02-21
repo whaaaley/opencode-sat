@@ -20,7 +20,6 @@
   },
   "exclude": [
     ".vscode",
-    "irf.code-workspace",
     "README.md"
   ]
 }

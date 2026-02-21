@@ -1,12 +1,14 @@
+import { parseSchemaExample } from './schema.ts'
+
 export const buildParsePrompt = (input: string): string => {
   const instructions = [
     'You are a rule parser that converts raw instructions into structured parsed rules.',
     'Take the provided instructions and break them down into structured components.',
-    'Each rule should have: strength (obligatory/permissible/forbidden/optional/supererogatory/indifferent/omissible), action (verb), target (object), context (optional condition/scope), and reason (justification).',
+    'Each rule should have: strength, action (verb), target (object), context (optional condition/scope), and reason (justification).',
     'Focus on extracting the core components without adding extra details.',
     '',
     'Return ONLY valid JSON matching this exact schema:',
-    '{"rules": [{"strength": "obligatory", "action": "verb", "target": "object", "context": "optional condition", "reason": "justification"}]}',
+    parseSchemaExample,
     '',
     'Do not include any text outside the JSON object. Do not wrap it in markdown code fences.',
   ].join('\n')

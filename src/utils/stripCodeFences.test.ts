@@ -40,4 +40,9 @@ describe('stripCodeFences', () => {
     const input = '```json\n{\n  "a": 1,\n  "b": 2\n}\n```'
     assertEquals(stripCodeFences(input), '{\n  "a": 1,\n  "b": 2\n}')
   })
+
+  it('strips fence preceded by text on the same line', () => {
+    const input = 'Here is the JSON: ```json\n{"rules": []}\n```'
+    assertEquals(stripCodeFences(input), '{"rules": []}')
+  })
 })

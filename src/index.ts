@@ -1,13 +1,10 @@
 import type { Plugin } from '@opencode-ai/plugin'
 import { tool } from '@opencode-ai/plugin'
-import { basename } from 'node:path'
-import { writeFile } from 'node:fs/promises'
 import { discover } from './discover.ts'
-import { compareBytes, type ComparisonResult, buildTable } from './compare.ts'
-import { ParseResponseSchema, FormatResponseSchema } from './schema.ts'
-import { buildFormatPrompt, buildParsePrompt } from './prompt.ts'
+import { buildTable, type ComparisonResult } from './compare.ts'
 import { detectModel, promptWithRetry } from './session.ts'
 import { safeAsync } from './utils/safe.ts'
+import { processFile } from './process.ts'
 
 export const IRFPlugin: Plugin = async ({ directory, client }) => {
   return {
@@ -19,7 +16,7 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
           try {
             // discover instruction files
             const discovered = await discover(directory)
-            if (discovered.error || !discovered.data) {
+            if (discovered.error !== null || !discovered.data) {
               return discovered.error || 'No instruction files found'
             }
 
@@ -30,8 +27,6 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
             }
 
             const files = discovered.data
-            const results: string[] = []
-            const comparisons: ComparisonResult[] = []
 
             // create a session for internal LLM calls
             const sessionResult = await client.session.create({
@@ -44,6 +39,14 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
             }
             const sessionId = sessionResult.data.id
 
+            // close over session details so processFile only needs a prompt callback
+            const prompt: Parameters<typeof processFile>[1] = (text, schema) => promptWithRetry(client, sessionId, text, schema, model)
+
+            // process files sequentially — parallel prompting through a shared
+            // session may cause ordering issues depending on SDK behavior
+            const results: string[] = []
+            const comparisons: ComparisonResult[] = []
+
             for (const file of files) {
               // bail if the tool call was cancelled
               if (context.abort.aborted) {
@@ -51,62 +54,19 @@ export const IRFPlugin: Plugin = async ({ directory, client }) => {
                 break
               }
 
-              // skip files that failed to read
-              if (file.error) {
-                results.push('**' + file.path + '**: Read failed — ' + file.error)
-                continue
+              const fileResult = await processFile(file, prompt)
+              results.push(fileResult.message)
+              if (fileResult.comparison) {
+                comparisons.push(fileResult.comparison)
               }
-
-              // step 1: parse instruction text -> structured rules
-              const parsePrompt = buildParsePrompt(file.content)
-              const parseResult = await promptWithRetry(
-                client,
-                sessionId,
-                parsePrompt,
-                ParseResponseSchema,
-                model,
-              )
-
-              if (parseResult.error || !parseResult.data) {
-                results.push('**' + file.path + '**: Parse failed — ' + (parseResult.error || 'no data'))
-                continue
-              }
-
-              const parsedJson = JSON.stringify(parseResult.data)
-
-              // step 2: format structured rules -> human-readable rules
-              const formatPrompt = buildFormatPrompt(parsedJson)
-              const formatResult = await promptWithRetry(
-                client,
-                sessionId,
-                formatPrompt,
-                FormatResponseSchema,
-                model,
-              )
-
-              if (formatResult.error || !formatResult.data) {
-                results.push('**' + file.path + '**: Format failed — ' + (formatResult.error || 'no data'))
-                continue
-              }
-
-              // step 3: write formatted rules back to original file
-              const formattedRules = formatResult.data.rules
-              const content = formattedRules.join('\n\n') + '\n'
-              const { error: writeError } = await safeAsync(() => writeFile(file.path, content, 'utf-8'))
-              if (writeError) {
-                results.push('**' + file.path + '**: Write failed — ' + writeError.message)
-                continue
-              }
-
-              const comparison = compareBytes(basename(file.path), file.content, content)
-              comparisons.push(comparison)
-              results.push('**' + file.path + '**: ' + formattedRules.length + ' rules written')
             }
 
             // clean up the internal session
-            await safeAsync(() => client.session.delete({
-              path: { id: sessionId },
-            }))
+            await safeAsync(() =>
+              client.session.delete({
+                path: { id: sessionId },
+              })
+            )
 
             // build comparison table
             if (comparisons.length > 0) {
