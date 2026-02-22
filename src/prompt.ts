@@ -1,4 +1,4 @@
-import { parseSchemaExample } from './schema'
+import { parseSchemaExample } from './rule-schema'
 
 export type FormatMode = 'verbose' | 'balanced' | 'concise'
 

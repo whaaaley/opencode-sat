@@ -8,7 +8,7 @@ import {
   RuleSchema,
   StrengthSchema,
   TargetSchema,
-} from './schema.ts'
+} from './rule-schema.ts'
 
 describe('StrengthSchema', () => {
   const valid = ['obligatory', 'permissible', 'forbidden', 'optional', 'supererogatory', 'indifferent', 'omissible']

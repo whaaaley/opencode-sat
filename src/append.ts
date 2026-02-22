@@ -2,7 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import type { PromptFn } from './process'
 import { buildFormatPrompt, buildParsePrompt, type FormatMode } from './prompt'
-import { FormatResponseSchema, ParseResponseSchema } from './schema'
+import { FormatResponseSchema, ParseResponseSchema } from './rule-schema'
 import { safeAsync } from './utils/safe'
 
 type AppendResultSuccess = {

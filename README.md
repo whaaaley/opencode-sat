@@ -1,6 +1,6 @@
 # Instruction Rule Formatter (IRF)
 
-An OpenCode plugin that converts unstructured instruction text into structured, consistent rules using speech act theory and deontic logic.
+An OpenCode plugin that converts unstructured text into structured, consistent formats using speech act theory.
 
 <img width="612" height="256" alt="image" src="https://github.com/user-attachments/assets/51edf4b5-831a-4e13-96de-8cad453ea13e" />
 
@@ -12,7 +12,77 @@ Once installed, just tell OpenCode what you want:
 Use IRF to rewrite my instruction files
 Rewrite instructions.md with IRF in verbose mode
 Use IRF to add a rule about using early returns
+Use IPF to refine this messy input into structured tasks
 ```
+
+## Two Formatters
+
+IRF is built on [speech act theory](https://en.wikipedia.org/wiki/Speech_act) (Austin, Searle). All instructions are **directives**: speech acts that get the hearer to do something. But directives come in two forms, and each needs a different formal framework.
+
+### Rule Formatting (deontic logic, regulative directives)
+
+Rules constrain ongoing behavior. They are standing obligations, prohibitions, and permissions that persist across all future actions. The formal framework is [deontic logic](https://en.wikipedia.org/wiki/Deontic_logic): what is obligatory, forbidden, and permissible.
+
+IRF parses unstructured rule text into structured components:
+
+```ts
+type ParsedRule = {
+  strength: 'obligatory' | 'forbidden' | 'permissible' | 'optional' | 'supererogatory' | 'indifferent' | 'omissible'
+  action: string
+  target: string
+  context?: string
+  reason: string
+}
+```
+
+Then formats them into one of three output modes: verbose, balanced, or concise.
+
+**Status: implemented.** See [Usage](#usage) below.
+
+### Prompt Formatting (action/planning logic, performative directives)
+
+Prompts request a specific one-shot action. They are not standing rules but immediate instructions. The formal framework is closer to [action languages](https://en.wikipedia.org/wiki/Action_language) from AI planning (STRIPS, ADL, HTN): what the goal is, what must be true before acting, and what changes after.
+
+A messy user prompt typically mixes three levels together:
+
+- **Goal** (desired end state): "I want search results to show up in chat"
+- **Tasks** (what to do): "add a postResult call, update the providers"
+- **Constraints** (conditions/preferences): "don't break existing tests, use safeAsync"
+
+Prompt formatting would parse raw input into structured components like:
+
+```ts
+type ParsedTask = {
+  intent: string
+  targets: Array<string>
+  constraints: Array<string>
+  context?: string
+  subtasks: Array<ParsedTask>
+}
+
+type ParsedPrompt = {
+  tasks: Array<ParsedTask>
+}
+```
+
+The schema is recursive. A `ParsedTask` can contain subtasks, which can contain their own subtasks. This follows the HTN (Hierarchical Task Network) model where compound tasks decompose into subtask trees. A voice dump like "refactor the search module, add guards to each provider, make sure bsky and wiki get validated, then run the tests and fix anything that breaks" becomes:
+
+```
+tasks:
+  - intent: refactor the search module
+    subtasks:
+      - intent: add guards to each provider
+        subtasks:
+          - intent: validate bsky responses
+          - intent: validate wiki responses
+  - intent: run the tests
+    subtasks:
+      - intent: fix any failures
+```
+
+This is especially useful for voice input, where thoughts are unstructured, sentences run together, and a single utterance often contains an entire task tree.
+
+**Status: implemented.** See [ipf-refine](#ipf-refine) below.
 
 ## Overview
 
@@ -115,13 +185,40 @@ irf-add --input "Use early returns" --file docs/rules.md
 | `file` | string | No | Target file path (default: first discovered instruction file) |
 | `mode` | string | No | Output format: verbose, balanced, or concise (default: balanced) |
 
+### ipf-refine
+
+Restructures messy or unstructured user input into a clear, actionable task hierarchy. Takes raw text (often from voice transcription) and decomposes it into structured tasks with intent, targets, constraints, context, and recursive subtasks. Returns a formatted prompt the agent can act on.
+
+```
+ipf-refine --input "refactor the search module add guards to each provider make sure bsky and wiki get validated then run the tests and fix anything that breaks"
+```
+
+Output:
+```
+1. Refactor the search module
+   Targets: src/search.ts
+   - Add guards to each provider
+     Targets: src/providers/
+     - Validate bsky responses
+       Targets: bsky-search.ts
+     - Validate wiki responses
+       Targets: wiki-search.ts
+
+2. Run the tests
+   Constraints: fix any failures
+```
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `input` | string | Yes | Raw unstructured user input to restructure |
+
 ## Theoretical Foundation
 
 IRF is grounded in [speech act theory](https://en.wikipedia.org/wiki/Speech_act) and [deontic logic](https://en.wikipedia.org/wiki/Deontic_logic).
 
 Instructions contain performative utterances that create obligations, permissions, and prohibitions. IRF identifies the illocutionary force of each instruction by extracting action verbs, target objects, contextual conditions, and justifications.
 
-Rules are categorized using deontic strength:
+Deontic strengths:
 
 - **Obligatory** - Required actions that create strong obligations
 - **Forbidden** - Prohibited actions with clear boundaries
@@ -130,18 +227,6 @@ Rules are categorized using deontic strength:
 - **Supererogatory** - Actions that exceed normal expectations
 - **Indifferent** - Actions with no normative preference
 - **Omissible** - Actions that can be reasonably omitted
-
-### Rule Schema
-
-```ts
-type ParsedRule = {
-  strength: 'obligatory' | 'forbidden' | 'permissible' | 'optional' | 'supererogatory' | 'indifferent' | 'omissible'
-  action: string
-  target: string
-  context?: string
-  reason: string
-}
-```
 
 ### Parsed Example
 
