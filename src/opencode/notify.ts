@@ -14,7 +14,6 @@ export const sendResult = async (options: SendResultOptions) => {
       parts: [{
         type: 'text',
         text: options.text,
-        ignored: true,
       }],
     },
   })
