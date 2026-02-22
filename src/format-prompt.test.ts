@@ -63,7 +63,7 @@ describe('formatPrompt', () => {
     })))
 
     expect(result).toContain('1. Refactor search')
-    expect(result).toContain('└── 2. Update bsky provider')
+    expect(result).toContain('└─── 2. Update bsky provider')
   })
 
   it('formats nested subtasks with tree connectors', () => {

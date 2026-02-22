@@ -88,8 +88,10 @@ const renderNode = (options: RenderOptions): Array<string> => {
 
       const isLast = i === node.children.length - 1
       const childHasChildren = child.children.length > 0
-      const connector = (isLast ? '└──' : '├──') + (childHasChildren ? '┬ ' : ' ')
-      const continuation = (isLast ? '   ' : '│  ')
+      const connector = (isLast ? '└──' : '├──') + (childHasChildren ? '┬ ' : '─ ')
+      const continuation = isLast
+        ? (childHasChildren ? '   ' : '    ')
+        : (childHasChildren ? '│  ' : '│   ')
 
       const childLines = renderNode({
         node: child,
@@ -132,6 +134,6 @@ export const formatPrompt = (parsed: ParsedPrompt): string => {
     children: flat.slice(1),
   }
 
-  const rootPrefix = root.children.length > 0 ? '┬ ' : ''
+  const rootPrefix = root.children.length > 0 ? '┌ ' : ''
   return renderNode({ node: root, prefix: rootPrefix, childPrefix: '' }).join('\n')
 }
