@@ -8,6 +8,14 @@ import { formatValidationError, validateJson } from './utils/validate'
 
 const MAX_RETRIES = 3
 
+// deny SAT's own tools in internal sessions to prevent infinite recursion
+const DENIED_TOOLS: Record<string, boolean> = {
+  'rewrite-instructions': false,
+  'add-instruction': false,
+  'automatic-rule': false,
+  'refine-prompt': false,
+}
+
 export type PromptModel = {
   providerID: string
   modelID: string
@@ -88,7 +96,7 @@ export const promptWithRetry = async <T>(options: PromptWithRetryOptions<T>): Pr
       path: { id: options.sessionId },
       body: {
         parts: [{ type: 'text', text: prompt }],
-        tools: {},
+        tools: DENIED_TOOLS,
         model: options.model,
       },
     })
