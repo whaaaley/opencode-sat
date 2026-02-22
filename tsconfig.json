@@ -26,6 +26,6 @@
     "sourceMap": true,
     "types": ["bun"]
   },
-  "include": ["irf.ts", "src/**/*"],
+  "include": ["sat.ts", "src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

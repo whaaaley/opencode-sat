@@ -25,12 +25,12 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/irf.js",
-      "types": "./dist/irf.d.ts"
+      "import": "./dist/sat.js",
+      "types": "./dist/sat.d.ts"
     }
   },
-  "main": "./dist/irf.js",
-  "types": "./dist/irf.d.ts",
+  "main": "./dist/sat.js",
+  "types": "./dist/sat.d.ts",
   "files": [
     "dist/",
     "README.md",

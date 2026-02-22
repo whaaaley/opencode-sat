@@ -1,4 +1,4 @@
-# Instruction Rule Formatter (IRF)
+# OpenCode SAT - Speech Act Theory
 
 An OpenCode plugin that converts unstructured text into structured, consistent formats using speech act theory.
 
@@ -9,21 +9,22 @@ An OpenCode plugin that converts unstructured text into structured, consistent f
 Once installed, just tell OpenCode what you want:
 
 ```
-Use IRF to rewrite my instruction files
-Rewrite instructions.md with IRF in verbose mode
-Use IRF to add a rule about using early returns
-Use IPF to refine this messy input into structured tasks
+Rewrite my instruction files
+Rewrite instructions.md in verbose mode
+Add a rule about using early returns
 ```
+
+Messy or voice-transcribed input is automatically refined into structured tasks before the agent acts on it.
 
 ## Two Formatters
 
-IRF is built on [speech act theory](https://en.wikipedia.org/wiki/Speech_act) (Austin, Searle). All instructions are **directives**: speech acts that get the hearer to do something. But directives come in two forms, and each needs a different formal framework.
+The plugin is built on [speech act theory](https://en.wikipedia.org/wiki/Speech_act) (Austin, Searle). All instructions are **directives**: speech acts that get the hearer to do something. But directives come in two forms, and each needs a different formal framework.
 
 ### Rule Formatting (deontic logic, regulative directives)
 
 Rules constrain ongoing behavior. They are standing obligations, prohibitions, and permissions that persist across all future actions. The formal framework is [deontic logic](https://en.wikipedia.org/wiki/Deontic_logic): what is obligatory, forbidden, and permissible.
 
-IRF parses unstructured rule text into structured components:
+The plugin parses unstructured rule text into structured components:
 
 ```ts
 type ParsedRule = {
@@ -82,11 +83,11 @@ tasks:
 
 This is especially useful for voice input, where thoughts are unstructured, sentences run together, and a single utterance often contains an entire task tree.
 
-**Status: implemented.** See [ipf-refine](#ipf-refine) below.
+**Status: implemented.** See [refine-prompt](#refine-prompt) below.
 
 ## Overview
 
-IRF takes raw instruction files and processes them through a two-step AI pipeline:
+The plugin takes raw instruction files and processes them through a two-step AI pipeline:
 
 1. **Parse** - Converts raw text into structured rule components (strength, action, target, context, reason)
 2. **Format** - Converts structured rules into one of three output modes: verbose, balanced, or concise
@@ -133,11 +134,11 @@ Reason: Arrow functions provide lexical this binding and a more compact syntax.
 
 ## Installation
 
-Add IRF to your `opencode.json`:
+Add `opencode-sat` to your `opencode.json`:
 
 ```json
 {
-  "plugin": ["opencode-irf"]
+  "plugin": ["opencode-sat"]
 }
 ```
 
@@ -145,7 +146,7 @@ Restart OpenCode. The plugin will be installed automatically.
 
 ## Usage
 
-The `irf-rewrite` tool reads the `instructions` array from your project's `opencode.json` and processes each matched file:
+The `rewrite-instructions` tool reads the `instructions` array from your project's `opencode.json` and processes each matched file:
 
 ```json
 {
@@ -153,15 +154,15 @@ The `irf-rewrite` tool reads the `instructions` array from your project's `openc
 }
 ```
 
-### irf-rewrite
+### rewrite-instructions
 
 Rewrites all matched instruction files through the parse/format pipeline.
 
 ```
-irf-rewrite                                    # discover from opencode.json, balanced mode
-irf-rewrite --mode concise                     # discover, concise output
-irf-rewrite --files fixtures/testing.md        # single file, balanced mode
-irf-rewrite --files a.md,b.md --mode verbose   # multiple files, verbose output
+rewrite-instructions                                    # discover from opencode.json, balanced mode
+rewrite-instructions --mode concise                     # discover, concise output
+rewrite-instructions --files fixtures/testing.md        # single file, balanced mode
+rewrite-instructions --files a.md,b.md --mode verbose   # multiple files, verbose output
 ```
 
 | Parameter | Type | Required | Description |
@@ -169,14 +170,14 @@ irf-rewrite --files a.md,b.md --mode verbose   # multiple files, verbose output
 | `mode` | string | No | Output format: verbose, balanced, or concise (default: balanced) |
 | `files` | string | No | Comma-separated file paths to process instead of discovering from opencode.json |
 
-### irf-add
+### add-instruction
 
 Appends new rules to the end of an instruction file without rewriting existing content.
 
 ```
-irf-add --input "Always use early returns"     # append to first discovered file, balanced mode
-irf-add --input "Use early returns" --mode concise
-irf-add --input "Use early returns" --file docs/rules.md
+add-instruction --input "Always use early returns"     # append to first discovered file, balanced mode
+add-instruction --input "Use early returns" --mode concise
+add-instruction --input "Use early returns" --file docs/rules.md
 ```
 
 | Parameter | Type | Required | Description |
@@ -185,12 +186,21 @@ irf-add --input "Use early returns" --file docs/rules.md
 | `file` | string | No | Target file path (default: first discovered instruction file) |
 | `mode` | string | No | Output format: verbose, balanced, or concise (default: balanced) |
 
-### ipf-refine
+### automatic-rule
+
+Automatically detects when the user corrects the agent's behavior or expresses a coding preference, extracts the implicit rule, and appends it to the instruction file. This tool is invoked automatically by the LLM, not by the user.
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `input` | string | Yes | The user's correction or feedback to extract a rule from |
+| `file` | string | No | Target file path (default: first discovered instruction file) |
+
+### refine-prompt
 
 Restructures messy or unstructured user input into a clear, actionable task hierarchy. Takes raw text (often from voice transcription) and decomposes it into structured tasks with intent, targets, constraints, context, and recursive subtasks. Returns a formatted prompt the agent can act on.
 
 ```
-ipf-refine --input "refactor the search module add guards to each provider make sure bsky and wiki get validated then run the tests and fix anything that breaks"
+refine-prompt --input "refactor the search module add guards to each provider make sure bsky and wiki get validated then run the tests and fix anything that breaks"
 ```
 
 Output:
@@ -214,9 +224,9 @@ Output:
 
 ## Theoretical Foundation
 
-IRF is grounded in [speech act theory](https://en.wikipedia.org/wiki/Speech_act) and [deontic logic](https://en.wikipedia.org/wiki/Deontic_logic).
+The plugin is grounded in [speech act theory](https://en.wikipedia.org/wiki/Speech_act) and [deontic logic](https://en.wikipedia.org/wiki/Deontic_logic).
 
-Instructions contain performative utterances that create obligations, permissions, and prohibitions. IRF identifies the illocutionary force of each instruction by extracting action verbs, target objects, contextual conditions, and justifications.
+Instructions contain performative utterances that create obligations, permissions, and prohibitions. The plugin identifies the illocutionary force of each instruction by extracting action verbs, target objects, contextual conditions, and justifications.
 
 Deontic strengths:
 

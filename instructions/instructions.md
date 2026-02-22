@@ -63,3 +63,6 @@ Reason: To keep all context visible and avoid losing information to subagent bou
 
 Rule: When modeling outcomes with distinct states like success and error, use discriminated unions with a shared literal field instead of a single type with optional properties.
 Reason: Prevents invalid states and enables exhaustive narrowing.
+
+Rule: When an if statement is a guard that checks the variable declared in the immediately preceding const/let, do not insert a blank line between the declaration and the if.
+Reason: The declaration and its guard check are logically coupled and should be visually grouped by touching.
