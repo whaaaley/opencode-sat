@@ -1,27 +1,42 @@
-# Instruction Rule Formatter (IRF)
+# OpenCode SAT (Speech Act Theory)
 
-An OpenCode plugin that converts unstructured instruction text into structured, consistent rules using speech act theory and deontic logic.
+An OpenCode plugin that converts unstructured text into structured, consistent formats using speech act theory.
 
-<img width="612" height="256" alt="image" src="https://github.com/user-attachments/assets/51edf4b5-831a-4e13-96de-8cad453ea13e" />
+<img width="612" height="256" alt="Rule formatting table output" src="https://github.com/user-attachments/assets/51edf4b5-831a-4e13-96de-8cad453ea13e" />
 
 ## Quick Start
 
-Once installed, just tell OpenCode what you want:
+Add the plugin to your `opencode.json` and restart OpenCode:
+
+```json
+{
+  "plugin": ["opencode-sat"]
+}
+```
+
+Then just tell OpenCode what you want:
 
 ```
-Use IRF to rewrite my instruction files
-Rewrite instructions.md with IRF in verbose mode
-Use IRF to add a rule about using early returns
+Rewrite my instruction files
+Add a rule about using early returns
 ```
 
-## Overview
+Messy or voice-transcribed input can be restructured into a clear task hierarchy using the `refine-prompt` tool.
 
-IRF takes raw instruction files and processes them through a two-step AI pipeline:
+## Tools
 
-1. **Parse** - Converts raw text into structured rule components (strength, action, target, context, reason)
-2. **Format** - Converts structured rules into one of three output modes: verbose, balanced, or concise
+For the theory behind the plugin, see [Theoretical Foundation](#theoretical-foundation).
 
-### Example
+### rewrite-instructions
+
+Rewrites all matched instruction files through the parse/format pipeline. Discovers files from the `instructions` array in your `opencode.json`. Accepts an optional `mode` (`verbose`, `balanced`, or `concise`, default `balanced`) and an optional `files` string of comma-separated paths to process specific files instead of running discovery.
+
+```
+rewrite-instructions
+rewrite-instructions [mode=concise]
+rewrite-instructions [files=fixtures/testing.md]
+rewrite-instructions [files=a.md,b.md, mode=verbose]
+```
 
 **Input:**
 ```
@@ -61,77 +76,66 @@ Reason: Arrow functions provide lexical this binding and a more compact syntax.
 - Never use function declarations or function expressions.
 ```
 
-## Installation
+### add-instruction
 
-Add IRF to your `opencode.json`:
-
-```json
-{
-  "plugin": ["opencode-irf"]
-}
-```
-
-Restart OpenCode. The plugin will be installed automatically.
-
-## Usage
-
-The `irf-rewrite` tool reads the `instructions` array from your project's `opencode.json` and processes each matched file:
-
-```json
-{
-  "instructions": ["docs/*.md", "rules/*.md"]
-}
-```
-
-### irf-rewrite
-
-Rewrites all matched instruction files through the parse/format pipeline.
+Appends new rules to the end of an instruction file without rewriting existing content. Takes an `input` string of unstructured rule text to parse, format, and append. Accepts an optional `file` path (defaults to the first discovered instruction file) and an optional `mode` (`verbose`, `balanced`, or `concise`, default `balanced`).
 
 ```
-irf-rewrite                                    # discover from opencode.json, balanced mode
-irf-rewrite --mode concise                     # discover, concise output
-irf-rewrite --files fixtures/testing.md        # single file, balanced mode
-irf-rewrite --files a.md,b.md --mode verbose   # multiple files, verbose output
+add-instruction [input=Always use early returns]
+add-instruction [input=Use early returns, mode=concise]
+add-instruction [input=Use early returns, file=docs/rules.md]
 ```
 
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `mode` | string | No | Output format: verbose, balanced, or concise (default: balanced) |
-| `files` | string | No | Comma-separated file paths to process instead of discovering from opencode.json |
+### automatic-rule
 
-### irf-add
-
-Appends new rules to the end of an instruction file without rewriting existing content.
+Detects when the user corrects the agent or expresses a coding preference, extracts the implicit rule, and appends it to the instruction file. This tool is invoked automatically by the LLM, not by the user. Takes an `input` string of the user's correction or feedback. Accepts an optional `file` path (defaults to the first discovered instruction file).
 
 ```
-irf-add --input "Always use early returns"     # append to first discovered file, balanced mode
-irf-add --input "Use early returns" --mode concise
-irf-add --input "Use early returns" --file docs/rules.md
+automatic-rule [input=Don't use semicolons in this project]
+automatic-rule [input=I prefer early returns, file=docs/rules.md]
 ```
 
-| Parameter | Type | Required | Description |
-| --- | --- | --- | --- |
-| `input` | string | Yes | Unstructured rule text to parse, format, and append |
-| `file` | string | No | Target file path (default: first discovered instruction file) |
-| `mode` | string | No | Output format: verbose, balanced, or concise (default: balanced) |
+### refine-prompt
+
+Restructures messy or unstructured user input into a clear task hierarchy. Takes an `input` string of raw text (often from voice transcription) and decomposes it into structured tasks with intent, targets, constraints, context, and recursive subtasks.
+
+```
+refine-prompt [input=refactor the search module add guards to each provider make sure bsky and wiki get validated then run the tests]
+```
+
+Output:
+```
+┌ 1. Refactor the search module
+│    > Targets: src/search.ts, src/providers/
+│    > Constraints: use safeAsync, no optional chaining
+│    > Context: Current error handling is inconsistent
+│
+├──┬ 2. Add guards to providers
+│  │    > Targets: src/providers/
+│  │    > Constraints: use isRecord helper
+│  │
+│  ├─── 3. Validate bsky responses
+│  │       > Targets: bsky-search.ts
+│  │
+│  └─── 4. Validate wiki responses
+│          > Targets: wiki-search.ts
+│
+├─── 5. Update error handling
+│       > Targets: src/utils/safe.ts
+│
+└─── 6. Run the tests
+        > Constraints: fix any failures
+```
 
 ## Theoretical Foundation
 
-IRF is grounded in [speech act theory](https://en.wikipedia.org/wiki/Speech_act) and [deontic logic](https://en.wikipedia.org/wiki/Deontic_logic).
+The plugin is built on [speech act theory](https://en.wikipedia.org/wiki/Speech_act) (Austin, Searle). All instructions are **directives**: speech acts that get the hearer to do something. But directives come in two forms, and each needs a different formal framework.
 
-Instructions contain performative utterances that create obligations, permissions, and prohibitions. IRF identifies the illocutionary force of each instruction by extracting action verbs, target objects, contextual conditions, and justifications.
+### Rule Formatting (deontic logic, regulative directives)
 
-Rules are categorized using deontic strength:
+Rules constrain ongoing behavior. They are standing obligations, prohibitions, and permissions that persist across all future actions. The formal framework is [deontic logic](https://en.wikipedia.org/wiki/Deontic_logic): what is obligatory, forbidden, and permissible.
 
-- **Obligatory** - Required actions that create strong obligations
-- **Forbidden** - Prohibited actions with clear boundaries
-- **Permissible** - Allowed actions within acceptable bounds
-- **Optional** - Discretionary choices left to the actor
-- **Supererogatory** - Actions that exceed normal expectations
-- **Indifferent** - Actions with no normative preference
-- **Omissible** - Actions that can be reasonably omitted
-
-### Rule Schema
+The plugin parses unstructured rule text into structured components:
 
 ```ts
 type ParsedRule = {
@@ -143,26 +147,33 @@ type ParsedRule = {
 }
 ```
 
-### Parsed Example
+### Prompt Formatting (action/planning logic, performative directives)
 
-```
-Always use return await when returning promises from async functions.
-This provides better stack traces and error handling.
-```
+Prompts request a specific one-shot action. They are not standing rules but immediate instructions. The formal framework is closer to [action languages](https://en.wikipedia.org/wiki/Action_language) from AI planning (STRIPS, ADL, HTN): what the goal is, what must be true before acting, and what changes after.
 
-```json
-{
-  "strength": "obligatory",
-  "action": "use",
-  "target": "return await",
-  "context": "when returning promises from async functions",
-  "reason": "better stack traces and error handling"
+A messy user prompt typically mixes three levels together:
+
+- **Goal** (desired end state): "I want search results to show up in chat"
+- **Tasks** (what to do): "add a postResult call, update the providers"
+- **Constraints** (conditions/preferences): "don't break existing tests, use safeAsync"
+
+The plugin parses raw input into structured components:
+
+```ts
+type ParsedTask = {
+  intent: string
+  targets: Array<string>
+  constraints: Array<string>
+  context?: string
+  subtasks: Array<ParsedTask>
 }
 ```
 
+The schema is recursive. A `ParsedTask` can contain subtasks, which can contain their own subtasks. This follows the HTN (Hierarchical Task Network) model where compound tasks decompose into subtask trees.
+
 ## Disclaimer
 
-I'm not an NLP expert. I stumbled onto speech act theory and deontic logic while researching NLP and thought it could be a good fit for structuring instructions. I was annoyed trying to write consistent rules, thinking about phrasing and grammar, so I thought there might be a better way to approach this systematically. The implementation may not perfectly align with academic definitions, but the goal is practical utility.
+I'm not an NLP expert. I stumbled onto speech act theory and deontic logic while researching NLP and thought it could be a good fit for structuring instructions. The implementation may not perfectly align with academic definitions, but the goal is practical utility.
 
 ## License
 

@@ -7,7 +7,7 @@ import { discover, readFilePaths } from './discover.ts'
 let tmpDir = ''
 
 const makeTmpDir = async () => {
-  tmpDir = await mkdtemp(join(tmpdir(), 'irf-discover-'))
+  tmpDir = await mkdtemp(join(tmpdir(), 'sat-discover-'))
   return tmpDir
 }
 

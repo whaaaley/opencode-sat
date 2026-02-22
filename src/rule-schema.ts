@@ -49,7 +49,6 @@ export const FormatResponseSchema = z.object({
 export type Strength = z.infer<typeof StrengthSchema>
 export type ParsedRule = z.infer<typeof ParsedRuleSchema>
 
-// generate a JSON schema example string from the Zod schema for use in prompts
 export const parseSchemaExample = JSON.stringify({
   rules: [{
     strength: StrengthSchema.options.join('/'),

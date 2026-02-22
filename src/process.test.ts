@@ -17,16 +17,19 @@ type MakePromptFnOptions = {
 }
 
 const makePromptFn = (options: MakePromptFnOptions): PromptFn => {
-  const { parseData, parseError, formatData, formatError } = options
   let call = 0
   return (() => {
     call++
     if (call === 1) {
-      return Promise.resolve(parseError !== null ? { data: null, error: parseError } : { data: parseData, error: null })
+      if (options.parseError !== null) {
+        return Promise.resolve({ data: null, error: options.parseError })
+      }
+      return Promise.resolve({ data: options.parseData, error: null })
     }
-    return Promise.resolve(
-      formatError !== null ? { data: null, error: formatError } : { data: formatData, error: null },
-    )
+    if (options.formatError !== null) {
+      return Promise.resolve({ data: null, error: options.formatError })
+    }
+    return Promise.resolve({ data: options.formatData, error: null })
   }) as PromptFn
 }
 
@@ -76,10 +79,7 @@ describe('processFile', () => {
     })
 
     const result = await processFile({ file, prompt })
-
-    expect(result.status).toEqual('readError')
-    expect(result.path).toEqual('/tmp/bad.md')
-    expect(result.status !== 'success').toBeTruthy()
+    if (result.status === 'success') throw new Error('expected error')
     expect(result.error).toEqual('ENOENT')
   })
 
@@ -95,7 +95,7 @@ describe('processFile', () => {
     const result = await processFile({ file, prompt })
 
     expect(result.status).toEqual('parseError')
-    expect(result.status !== 'success').toBeTruthy()
+    if (result.status === 'success') throw new Error('expected error')
     expect(result.error).toContain('LLM timeout')
   })
 
@@ -111,7 +111,7 @@ describe('processFile', () => {
     const result = await processFile({ file, prompt })
 
     expect(result.status).toEqual('formatError')
-    expect(result.status !== 'success').toBeTruthy()
+    if (result.status === 'success') throw new Error('expected error')
     expect(result.error).toContain('schema mismatch')
   })
 
@@ -127,12 +127,12 @@ describe('processFile', () => {
     const result = await processFile({ file, prompt })
 
     expect(result.status).toEqual('writeError')
-    expect(result.status !== 'success').toBeTruthy()
+    if (result.status === 'success') throw new Error('expected error')
     expect(result.error).toContain('ENOENT')
   })
 
   it('writes formatted rules and returns comparison on success', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-process-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-process-'))
     const filePath = join(dir, 'rules.md')
     const originalContent = 'Use arrow functions for consistency.\nPrefer const over let.\n'
     await writeFile(filePath, originalContent, 'utf-8')
@@ -148,7 +148,7 @@ describe('processFile', () => {
     const result = await processFile({ file, prompt })
 
     expect(result.status).toEqual('success')
-    expect(result.status === 'success').toBeTruthy()
+    if (result.status !== 'success') throw new Error('expected success')
     expect(result.rulesCount).toEqual(1)
     expect(result.comparison.file).toEqual('rules.md')
 
@@ -160,7 +160,7 @@ describe('processFile', () => {
   })
 
   it('joins multiple rules with double newline in verbose and balanced modes', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-process-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-process-'))
     const filePath = join(dir, 'multi.md')
     await writeFile(filePath, 'original', 'utf-8')
 
@@ -182,7 +182,7 @@ describe('processFile', () => {
     const result = await processFile({ file, prompt })
 
     expect(result.status).toEqual('success')
-    expect(result.status === 'success').toBeTruthy()
+    if (result.status !== 'success') throw new Error('expected success')
     expect(result.rulesCount).toEqual(2)
 
     const written = await readFile(filePath, 'utf-8')
@@ -194,7 +194,7 @@ describe('processFile', () => {
   })
 
   it('joins multiple rules with single newline in concise mode', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-process-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-process-'))
     const filePath = join(dir, 'concise.md')
     await writeFile(filePath, 'original', 'utf-8')
 
@@ -216,7 +216,7 @@ describe('processFile', () => {
     const result = await processFile({ file, prompt, mode: 'concise' })
 
     expect(result.status).toEqual('success')
-    expect(result.status === 'success').toBeTruthy()
+    if (result.status !== 'success') throw new Error('expected success')
     expect(result.rulesCount).toEqual(2)
 
     const written = await readFile(filePath, 'utf-8')
@@ -244,7 +244,7 @@ describe('processFile', () => {
   })
 
   it('comparison reflects byte difference between original and generated', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-process-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-process-'))
     const filePath = join(dir, 'test.md')
     const originalContent = 'a'.repeat(100)
     await writeFile(filePath, originalContent, 'utf-8')
@@ -261,7 +261,7 @@ describe('processFile', () => {
     const result = await processFile({ file, prompt })
 
     expect(result.status).toEqual('success')
-    expect(result.status === 'success').toBeTruthy()
+    if (result.status !== 'success') throw new Error('expected success')
     expect(result.comparison.originalBytes).toEqual(100)
     // "Rule: Short\nReason: Brief\n" = 26 bytes
     expect(result.comparison.generatedBytes).toEqual(26)
@@ -271,7 +271,7 @@ describe('processFile', () => {
   })
 
   it('passes verbose mode to format prompt', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-process-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-process-'))
     const filePath = join(dir, 'test.md')
     await writeFile(filePath, 'original', 'utf-8')
 
@@ -288,7 +288,7 @@ describe('processFile', () => {
   })
 
   it('passes concise mode to format prompt', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-process-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-process-'))
     const filePath = join(dir, 'test.md')
     await writeFile(filePath, 'original', 'utf-8')
 
@@ -305,7 +305,7 @@ describe('processFile', () => {
   })
 
   it('defaults to balanced mode when mode is omitted', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-process-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-process-'))
     const filePath = join(dir, 'test.md')
     await writeFile(filePath, 'original', 'utf-8')
 

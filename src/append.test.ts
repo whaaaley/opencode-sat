@@ -54,7 +54,7 @@ describe('appendRules', () => {
   })
 
   it('returns parseError when parse fails', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-'))
     const filePath = 'instructions.md'
     await writeFile(join(dir, filePath), 'existing content\n', 'utf-8')
 
@@ -73,7 +73,7 @@ describe('appendRules', () => {
   })
 
   it('returns formatError when format fails', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-'))
     const filePath = 'instructions.md'
     await writeFile(join(dir, filePath), 'existing content\n', 'utf-8')
 
@@ -92,7 +92,7 @@ describe('appendRules', () => {
   })
 
   it('appends formatted rules to end of file', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-'))
     const filePath = 'instructions.md'
     await writeFile(join(dir, filePath), 'existing content\n', 'utf-8')
 
@@ -114,7 +114,7 @@ describe('appendRules', () => {
   })
 
   it('preserves existing content without modification', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-'))
     const filePath = 'instructions.md'
     const existing = 'Rule: Existing rule\nReason: already here\n'
     await writeFile(join(dir, filePath), existing, 'utf-8')
@@ -133,7 +133,7 @@ describe('appendRules', () => {
   })
 
   it('joins multiple rules with double newline in balanced mode', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-'))
     const filePath = 'instructions.md'
     await writeFile(join(dir, filePath), 'header\n', 'utf-8')
 
@@ -162,7 +162,7 @@ describe('appendRules', () => {
   })
 
   it('joins rules with single newline in concise mode', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-'))
     const filePath = 'instructions.md'
     await writeFile(join(dir, filePath), 'header\n', 'utf-8')
 
@@ -186,7 +186,7 @@ describe('appendRules', () => {
   })
 
   it('handles file without trailing newline', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-'))
     const filePath = 'instructions.md'
     await writeFile(join(dir, filePath), 'no trailing newline', 'utf-8')
 
@@ -204,7 +204,7 @@ describe('appendRules', () => {
   })
 
   it('propagates file path in result', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'irf-'))
+    const dir = await mkdtemp(join(tmpdir(), 'sat-'))
     const filePath = 'custom/path.md'
     // readError since nested dir doesn't exist, but path should propagate
     const result = await appendRules({

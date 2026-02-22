@@ -2,7 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import type { PromptFn } from './process'
 import { buildFormatPrompt, buildParsePrompt, type FormatMode } from './prompt'
-import { FormatResponseSchema, ParseResponseSchema } from './schema'
+import { FormatResponseSchema, ParseResponseSchema } from './rule-schema'
 import { safeAsync } from './utils/safe'
 
 type AppendResultSuccess = {
@@ -69,12 +69,12 @@ export const appendRules = async (options: AppendRulesOptions): Promise<AppendRe
   const separator = existing.data.endsWith('\n') ? '\n' : '\n\n'
   const content = existing.data + separator + newRules + '\n'
 
-  const { error: writeError } = await safeAsync(() => writeFile(fullPath, content, 'utf-8'))
-  if (writeError) {
+  const writeResult = await safeAsync(() => writeFile(fullPath, content, 'utf-8'))
+  if (writeResult.error) {
     return {
       status: 'writeError',
       path: options.filePath,
-      error: writeError.message,
+      error: writeResult.error.message,
     }
   }
 

@@ -1,6 +1,6 @@
 {
-  "name": "opencode-irf",
-  "version": "0.0.11",
+  "name": "opencode-sat",
+  "version": "0.0.12-next.2",
   "description": "OpenCode plugin that converts unstructured instructions into structured rules using speech act theory and deontic logic.",
   "keywords": [
     "opencode",
@@ -12,25 +12,25 @@
     "speech-act-theory",
     "deontic-logic"
   ],
-  "homepage": "https://github.com/whaaaley/opencode-irf#readme",
+  "homepage": "https://github.com/whaaaley/opencode-sat#readme",
   "bugs": {
-    "url": "https://github.com/whaaaley/opencode-irf/issues"
+    "url": "https://github.com/whaaaley/opencode-sat/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/whaaaley/opencode-irf.git"
+    "url": "git+https://github.com/whaaaley/opencode-sat.git"
   },
   "license": "MIT",
   "author": "Dustin Dowell",
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/irf.js",
-      "types": "./dist/irf.d.ts"
+      "import": "./dist/sat.js",
+      "types": "./dist/sat.d.ts"
     }
   },
-  "main": "./dist/irf.js",
-  "types": "./dist/irf.d.ts",
+  "main": "./dist/sat.js",
+  "types": "./dist/sat.d.ts",
   "files": [
     "dist/",
     "README.md",
