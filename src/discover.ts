@@ -77,6 +77,7 @@ const readFiles = async (files: string[]) => {
       results.push({ path: file, content: '', error: error.message })
       continue
     }
+
     results.push({ path: file, content: data })
   }
 
@@ -107,10 +108,8 @@ export const discover = async (directory: string): Promise<DiscoverResult> => {
     }
   }
 
-  const results = await readFiles(files)
-
   return {
-    data: results,
+    data: await readFiles(files),
     error: null,
   }
 }

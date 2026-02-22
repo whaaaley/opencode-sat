@@ -2,6 +2,8 @@
 
 An OpenCode plugin that converts unstructured instruction text into structured, consistent rules using speech act theory and deontic logic.
 
+<img width="612" height="256" alt="image" src="https://github.com/user-attachments/assets/51edf4b5-831a-4e13-96de-8cad453ea13e" />
+
 ## Quick Start
 
 Once installed, just tell OpenCode what you want:
@@ -87,6 +89,13 @@ irf-rewrite --mode concise                     # discover, concise output
 irf-rewrite --files fixtures/testing.md        # single file, balanced mode
 irf-rewrite --files a.md,b.md --mode verbose   # multiple files, verbose output
 ```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `mode` | string | No | Output format: verbose, balanced, or concise (default: balanced) |
+| `files` | string | No | Comma-separated file paths to process instead of discovering from opencode.json |
 
 ## Theoretical Foundation
 

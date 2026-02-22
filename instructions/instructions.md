@@ -60,3 +60,6 @@ Reason: To build momentum and reduce list size quickly before tackling complex i
 
 Rule: Do not delegate work to subagents or use the explore/task tool. Do all work directly in the main conversation.
 Reason: To keep all context visible and avoid losing information to subagent boundaries.
+
+Rule: When modeling outcomes with distinct states like success and error, use discriminated unions with a shared literal field instead of a single type with optional properties.
+Reason: Prevents invalid states and enables exhaustive narrowing.

@@ -13,7 +13,7 @@ export type PromptModel = {
   modelID: string
 }
 
-// SDK types — local workarounds until the SDK exports proper types
+// SDK types: local workarounds until the SDK exports proper types
 type Part = {
   type: string
   text?: string
@@ -36,16 +36,13 @@ const isMessageEntryArray = (v: unknown): v is MessageEntry[] => Array.isArray(v
 export const extractText = (parts: Part[]): string => {
   return parts
     .filter((p) => p.type === 'text' && p.text)
-    // fallback needed because TS cannot narrow through .filter()
     .map((p) => p.text || '')
     .join('')
 }
 
 // detect model from the calling session's most recent assistant message
 export const detectModel = async (client: PluginInput['client'], sessionId: string): Promise<PromptModel | null> => {
-  const messagesResult = await client.session.messages({
-    path: { id: sessionId },
-  })
+  const messagesResult = await client.session.messages({ path: { id: sessionId } })
   if (!messagesResult.data) {
     return null
   }
@@ -54,6 +51,7 @@ export const detectModel = async (client: PluginInput['client'], sessionId: stri
   if (!isMessageEntryArray(messages)) {
     return null
   }
+
   for (let i = messages.length - 1; i >= 0; i--) {
     const message = messages[i]
     if (!message) {
@@ -82,21 +80,20 @@ type PromptWithRetryOptions<T> = {
 
 // prompt the LLM and validate the response, retrying on failure
 export const promptWithRetry = async <T>(options: PromptWithRetryOptions<T>): Promise<Result<T>> => {
-  const { client, sessionId, initialPrompt, schema, model } = options
-  let prompt = initialPrompt
+  let prompt = options.initialPrompt
   let lastError = ''
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    const response = await client.session.prompt({
-      path: { id: sessionId },
+    const response = await options.client.session.prompt({
+      path: { id: options.sessionId },
       body: {
         parts: [{ type: 'text', text: prompt }],
         tools: {},
-        model,
+        model: options.model,
       },
     })
 
-    // no response data means a transport/API failure — not retryable
+    // no response data means a transport/API failure, not retryable
     if (!response.data) {
       return {
         data: null,
@@ -111,6 +108,7 @@ export const promptWithRetry = async <T>(options: PromptWithRetryOptions<T>): Pr
         error: 'Unexpected response shape: missing info (attempt ' + (attempt + 1) + ')',
       }
     }
+
     const llmError = extractLlmError(info)
     if (llmError) {
       return {
@@ -127,7 +125,7 @@ export const promptWithRetry = async <T>(options: PromptWithRetryOptions<T>): Pr
       }
     }
 
-    // empty text is a model issue — retryable
+    // empty text is a model issue, retryable
     const text = extractText(parts)
     if (!text) {
       lastError = 'Empty response'
@@ -137,7 +135,7 @@ export const promptWithRetry = async <T>(options: PromptWithRetryOptions<T>): Pr
 
     // validate against schema
     const cleaned = stripCodeFences(text)
-    const validation = validateJson(cleaned, schema)
+    const validation = validateJson(cleaned, options.schema)
     if (validation.error) {
       const errorMsg = formatValidationError(validation)
       lastError = errorMsg + ' | raw: ' + cleaned.slice(0, 200)
